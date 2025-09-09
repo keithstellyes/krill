@@ -32,3 +32,4 @@ with open('Makefile', 'w') as f:
         f.write(f'\t$(CC) $(CFLAGS) {src} -c\n')
     f.write('\nclean:\n')
     f.write('\trm -f *.o\n')
+    f.write('\trm -f libkrill.a\n')
