@@ -5,9 +5,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 
-#include "ShaderProgram.hpp"
-#include "Buffer.hpp"
-#include "VAO.hpp"
+#include "krill.hpp"
 
 ShaderProgram createProgram()
 {
