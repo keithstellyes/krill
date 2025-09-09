@@ -1,0 +1,28 @@
+#!/usr/bin/env python3
+import glob, subprocess
+
+cpps = glob.glob('src/*.cpp')
+deps = subprocess.run(' '.join(['g++', '-MM'] + cpps), shell=True, capture_output=True)
+deps_str = deps.stdout.decode('ascii')
+
+targets = []
+for line in deps_str.split('\n'):
+    line = line.rstrip() + '\n'
+    if ':' in line:
+        targets.append(line)
+    else:
+        targets[-1] += line
+
+with open('Makefile', 'w') as f:
+    f.write('############################\n')
+    f.write('# Generated with configure #\n')
+    f.write('############################\n\n')
+    f.write('CC=g++\n')
+    f.write('CFLAGS=-Wall -O2\n\n')
+    for target in targets:
+        # normalize for double newlines
+        f.write(target.rstrip() + '\n')
+        src = target.split(' ')[1]
+        f.write(f'\t$(CC) $(CFLAGS) {src} -c\n')
+    f.write('\nclean:\n')
+    f.write('\trm -f *.o\n')
