@@ -14,10 +14,8 @@ struct vertex {
 
 ShaderProgram createProgram()
 {
-    std::cout << "About to start vert" << std::endl;
-    VertexShader basicVert(std::filesystem::path("shaders/passthru.vert"));
-    std::cout << "About to start redTri" << std::endl;
-    FragmentShader redTri(std::filesystem::path("shaders/red.frag"));
+    VertexShader basicVert(std::filesystem::path("shaders/texpassthru.vert"));
+    FragmentShader redTri(std::filesystem::path("shaders/tex.frag"));
     return ShaderProgram(basicVert, redTri);
 }
 
