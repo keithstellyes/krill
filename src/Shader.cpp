@@ -11,7 +11,6 @@ GLuint compileShader(const char *src, GLenum shaderType)
     char infoLog[512];
     glGetShaderiv(shaderId, GL_COMPILE_STATUS, &success);
 
-    std::cout <<"compiling..." << std::endl;
     if(!success) {
         glGetShaderInfoLog(shaderId, 512, NULL, infoLog);
         std::cerr << "Error occurred while compiling shader: " << infoLog << std::endl;
