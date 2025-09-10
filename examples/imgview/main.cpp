@@ -54,7 +54,6 @@ int main(int argc, char *argv[])
     ElementArrayBuffer ebo;
     VAO vao;
     vao.bind();
-
     vbo.bind();
     std::vector<vertex> vertices = {{-1.0f, 1.0, 0.0, 1.0}, //topleft
         {1.0, 1.0, 1.0, 1.0}, //topright
@@ -71,18 +70,12 @@ int main(int argc, char *argv[])
     vd.addVec2();
     vbo.useVertexDefinition(vd);
 
-    unsigned int texture;
-
-    glGenTextures(1, &texture);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, img);
-    glGenerateMipmap(GL_TEXTURE_2D);
+    Texture(width, height, img);
     stbi_image_free(img);
 
     ShaderProgram program = createProgram();
     program.use();
-    glUniform1i(glGetUniformLocation(program.getProgramId(), "tex"), 0);
+    program.set("tex", 0);
     glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_INT, 0);
 
     SDL_GL_SwapWindow(window);
