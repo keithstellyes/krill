@@ -44,7 +44,6 @@ VertexShader::VertexShader(const char *src)
 Shader::~Shader()
 {
     glDeleteShader(this->shaderId);
-    std::cout << "Shader dtor called\n";
 }
 
 FragmentShader::FragmentShader(std::ifstream& file)
