@@ -27,7 +27,9 @@ int ShaderProgram::getUniformLocation(const char *name)
     }
     int uniformLoc = glGetUniformLocation(this->programId, name);
     if(uniformLoc == -1) {
-        throw new std::runtime_error("Failed to find uniform!");
+        char msgbuff[50];
+        snprintf(msgbuff, 50, "Failed to find uniform: %s", name);
+        throw new std::runtime_error(msgbuff);
     }
     uniformLocCache[name] = uniformLoc;
     return uniformLoc;

@@ -1,0 +1,3 @@
+The minutes hand, hours hand, and the background texture will all be the same
+texture size to simplify rotation logic. The hand textures will mostly
+be alpha
