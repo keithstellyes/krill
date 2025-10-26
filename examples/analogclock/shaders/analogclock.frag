@@ -22,8 +22,8 @@ vec4 rotTex(float rads, vec2 coord, sampler2D tex) {
 
 void main() {
 
-    float hourRotRads = -radians(360) * ((hours + (mins * (1/60.0))) / 12);
-    float minRotRads = -radians(360) * ((mins + (secs * (1/60.0))) / 60);
+    float hourRotRads = -radians(360.0) * ((hours + (mins * (1/60.0))) / 12);
+    float minRotRads = -radians(360.0) * ((mins + (secs * (1/60.0))) / 60);
     vec4 clockPix = texture(clockTexture, clockTexCoord);
     vec4 hoursPix = rotTex(hourRotRads, clockTexCoord, hoursHand);
     vec4 minsPix = rotTex(minRotRads, clockTexCoord, minutesHand);
