@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
 
     ShaderProgram redProgram = redProgramOpt.value();
     redProgram.use();
-    redProgram.set("green", 0.4);
+    redProgram.set("green", 0.4f);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
     SDL_GL_SwapWindow(window);
