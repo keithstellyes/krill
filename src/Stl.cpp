@@ -14,18 +14,37 @@ void StlModel::parse(std::filesystem::path path)
     this->parse(f);
 }
 
-void StlModel::parse(std::fstream &f)
+/*
+ * 0 or more whitespace preceding 'solid', with a 'facet' soon after
+ */
+static StlHeaderType guessStlType(std::fstream &f)
 {
     auto beginning = f.tellg();
-    const char *magicNumber = "solid ";
-    // magic number does NOT include a null terminator,
-    size_t magicNumberLen = strlen(magicNumber);
-
-    char buf[magicNumberLen];
-    f.read(buf, magicNumberLen);
-
+    char sample[101];
+    f.read(sample, 100);
     f.seekg(beginning);
-    if(memcmp(buf, magicNumber, magicNumberLen) == 0) {
+    sample[100] = '\0';
+    std::string str(sample);
+    // skip initial whitespace
+    while(!str.empty() && (str[0] == ' ' || str[0] == '\n' || str[0] == '\r' || str[0] == '\n')) {
+        str.erase(0, 1);
+    }
+    if(str.find("solid") != 0) {
+        return StlHeaderType::RawData;
+    }
+    // consume token
+    str.erase(0, strlen("solid "));
+    if(str.find("facet") == std::string::npos) {
+        return StlHeaderType::RawData;
+    } else {
+        return StlHeaderType::SolidName;
+    }
+}
+
+void StlModel::parse(std::fstream &f)
+{
+    StlHeaderType t = guessStlType(f);
+    if(t == StlHeaderType::SolidName) {
         this->parseAscii(f);
     } else {
         this->parseBinary(f);
