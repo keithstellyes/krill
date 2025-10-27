@@ -15,14 +15,14 @@ for line in deps_str.split('\n'):
     else:
         targets[-1] += line
 
-print(objs)
+print('Scanned objects:', ', '.join(objs))
 
 with open('Makefile', 'w') as f:
     f.write('############################\n')
     f.write('# Generated with configure #\n')
     f.write('############################\n\n')
     f.write('CC=g++\n')
-    f.write('CFLAGS=-Wall -O2\n\n')
+    f.write('CFLAGS=-Wall -O2 -std=c++23\n\n')
     f.write('libkrill.a: ' + ' '.join(objs) + '\n')
     f.write('\tar rvs libkrill.a *.o\n\n')
     for target in targets:
