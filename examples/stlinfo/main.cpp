@@ -18,6 +18,10 @@ int main(int argc, char *argv[])
     StlModel model(path);
 
     std::cout.imbue(std::locale(""));
+    if(model.getHeaderType() == StlHeaderType::SolidName) {
+        std::cout << "ASCII STL\n";
+        std::cout << "Solid name:" << model.getSolidName() << '\n';
+    }
     std::cout << model.getTriangleCount() << " triangles\n";
     std::cout << model.getTriangleCount() * 3 << " vertices" << std::endl;
     return 0;

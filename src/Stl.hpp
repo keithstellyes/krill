@@ -45,8 +45,13 @@ namespace krill {
             void parse(std::fstream &f);
             void parseBinary(std::fstream &f);
             void parseAscii(std::fstream &f);
+            constexpr StlVertex parseAsciiLabeledVertex(std::string &s);
+            constexpr void parseAsciiTriangle(std::string &s);
+            void parseAsciiTriangles(std::string&);
         public:
             StlModel(std::filesystem::path);
             size_t getTriangleCount() const;
+            StlHeaderType getHeaderType() const;
+            std::string getSolidName() const;
     };
 }
