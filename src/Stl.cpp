@@ -241,3 +241,30 @@ std::string StlModel::getSolidName() const
     return ret;
 }
 
+constexpr Vertex3d fromStlVertex(const StlVertex &stlV)
+{
+    Vertex3d v3d;
+    v3d.x = stlV.x;
+    v3d.y = stlV.y;
+    v3d.z = stlV.z;
+    return v3d;
+}
+constexpr Triangle fromStlTri(const StlTri &stlTri)
+{
+    Triangle tri;
+    tri.vertices[0] = fromStlVertex(stlTri.vertices[0]);
+    tri.vertices[1] = fromStlVertex(stlTri.vertices[1]);
+    tri.vertices[2] = fromStlVertex(stlTri.vertices[2]);
+    return tri;
+}
+
+std::vector<Triangle> StlModel::getSimpleTriangles() const
+{
+    std::vector<Triangle> tris;
+    tris.reserve(getTriangleCount());
+    for(const StlTri &stlTri : triangles) {
+        tris.push_back(fromStlTri(stlTri));
+    }
+    return tris;
+}
+

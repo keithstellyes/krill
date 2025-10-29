@@ -29,7 +29,7 @@ int ShaderProgram::getUniformLocation(const char *name)
     if(uniformLoc == -1) {
         char msgbuff[50];
         snprintf(msgbuff, 50, "Failed to find uniform: %s", name);
-        throw new std::runtime_error(msgbuff);
+        throw std::runtime_error(msgbuff);
     }
     uniformLocCache[name] = uniformLoc;
     return uniformLoc;

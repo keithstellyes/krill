@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Triangle.hpp"
+
 #include <array>
 #include <cstdint>
 #include <memory>
@@ -53,5 +55,6 @@ namespace krill {
             size_t getTriangleCount() const;
             StlHeaderType getHeaderType() const;
             std::string getSolidName() const;
+            std::vector<Triangle> getSimpleTriangles() const;
     };
 }

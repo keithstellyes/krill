@@ -23,7 +23,9 @@ int main(int argc, char *argv[])
         std::cout << "Solid name:" << model.getSolidName() << '\n';
     }
     std::cout << model.getTriangleCount() << " triangles\n";
-    std::cout << model.getTriangleCount() * 3 << " vertices" << std::endl;
+    std::cout << model.getTriangleCount() * 3 << " vertices" << '\n';
+    std::cout << "First triangle: " << model.getSimpleTriangles()[0] << '\n';
+    std::cout << "Last triangle: " << model.getSimpleTriangles()[model.getTriangleCount() - 1] << '\n';
     return 0;
 }
 
