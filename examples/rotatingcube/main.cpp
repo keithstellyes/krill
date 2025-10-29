@@ -11,7 +11,7 @@
 
 struct context {
     ShaderProgram *shaderProgram;
-    unsigned int vao;
+    VAO *vao;
     GLFWwindow* window;
 
     unsigned int uniform_transform;
@@ -129,14 +129,7 @@ void initialize(struct context* context) {
         0, 4, 5,
     };
 
-    glGenVertexArrays(1, &context->vao);
-    glBindVertexArray(context->vao);
-/*
-    unsigned int triangles_ebo;
-    glGenBuffers(1, &triangles_ebo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangles_ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof triangle_indices, triangle_indices, GL_STATIC_DRAW);
-*/
+    context->vao = new VAO();
     context->ebo.bind();
     context->ebo.setData(triangle_indices, GL_STATIC_DRAW);
     unsigned int verticies_vbo;
@@ -155,11 +148,6 @@ void initialize(struct context* context) {
     glVertexAttribPointer(colors_index, 3, GL_FLOAT, GL_FALSE, 0, NULL);
     glEnableVertexAttribArray(colors_index);
 
-    // Unbind to prevent accidental modification
-    glBindVertexArray(0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
     VertexShader vert(std::filesystem::path("vertex.glsl"));
     FragmentShader frag(std::filesystem::path("fragment.glsl"));
     context->shaderProgram = new ShaderProgram(vert, frag);
@@ -168,7 +156,6 @@ void initialize(struct context* context) {
 // Based on https://antongerdelan.net/opengl/glcontext2.html
 void update_fps(struct context* context) {
     // All times in seconds
-
     static double last_update_time = 0;
     static int frames_since_last_update = 0;
 
@@ -204,6 +191,6 @@ void render(struct context* context) {
     }
     context->shaderProgram->use();
     context->shaderProgram->set("ticks", (float)glfwGetTime());
-    glBindVertexArray(context->vao);
+    context->vao->bind();
     glDrawElements(GL_TRIANGLES, triangles * 3, GL_UNSIGNED_SHORT, NULL);
 }
