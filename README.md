@@ -12,3 +12,9 @@ GPU takes in the clock texture and hand textures and the current time, then gene
 that the minutes and hours hands travel between integer quantities, e.g. the hours hand will be halfway
 to 10 at 9:30.
 ![Screenshot of an app displaying an analogclock](screenshots/analogclock.png)
+
+There is also `rotatingcube`. I took the example [here from GitHub user c2d7fa](https://github.com/c2d7fa/opengl-cube/) and am currently porting it to
+use Krill's replacements for OpenGL calls. Additionally, I modified rotation logic to happen in the _shader_ and added FPS limiting, hardcoded
+to my monitor refresh rate of 165Hz.
+
+![Rotating cube of multiple colors](screenshots/cube.webp)
