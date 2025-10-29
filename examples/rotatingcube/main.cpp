@@ -21,11 +21,11 @@ struct context {
 void render(struct context*);
 void initialize(struct context*);
 
-
+// Added by Keith: I wanted to throttle FPS to my monitor refresh rate(165Hz)
 // a buffer for target, rather go slightly too fast than too slow
 double tgtFps = 165.0 + (165 * .05);
-
 double secPerFrame = 1.0/tgtFps;
+
 int main() {
     if (!glfwInit()) return 1;
 
@@ -47,6 +47,9 @@ int main() {
     double last = 0;
 
     while (!glfwWindowShouldClose(window)) {
+        // Added by Keith: I wanted to throttle FPS to my monitor refresh rate(165Hz)
+        // this is a naive impl of a frame rate limiter. could be imrpoved
+        // but good enough to avoid a busy beaver
         double now = glfwGetTime();
         if(now - last < secPerFrame) {
             double tgt = last + secPerFrame-.01;
@@ -195,7 +198,6 @@ float animation(float duration) {
 void render(struct context* context) {
     update_fps(context);
 
-    // Clear
     {
         glClearColor(0.1, 0.12, 0.2, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
