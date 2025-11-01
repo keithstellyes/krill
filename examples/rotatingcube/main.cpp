@@ -11,7 +11,8 @@
 
 struct context {
     ShaderProgram *shaderProgram;
-    VAO *vao;
+    VAO vao;
+    ArrayBuffer verticesVbo, colorsVbo;
     GLFWwindow* window;
 
     unsigned int uniform_transform;
@@ -41,6 +42,8 @@ int main() {
     glfwSwapInterval(0);
     glewInit();
 
+    // NOTE: this context must be _after_ OpenGL initialization, as some of these objects
+    // require OpenGL to be init'd
     struct context context;
     context.window = window;
     initialize(&context);
@@ -77,7 +80,7 @@ void initialize(struct context* context) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    float vertices[] = {
+    std::vector<float> vertices = {
         // Front face
         0.5,  0.5,  0.5,
         -0.5,  0.5,  0.5,
@@ -91,7 +94,7 @@ void initialize(struct context* context) {
         0.5, -0.5, -0.5,
     };
 
-    float vertex_colors[] = {
+    std::vector<float> vertex_colors = {
         1.0, 0.4, 0.6,
         1.0, 0.9, 0.2,
         0.7, 0.3, 0.8,
@@ -129,21 +132,16 @@ void initialize(struct context* context) {
         0, 4, 5,
     };
 
-    context->vao = new VAO();
     context->ebo.bind();
     context->ebo.setData(triangle_indices, GL_STATIC_DRAW);
-    unsigned int verticies_vbo;
-    glGenBuffers(1, &verticies_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, verticies_vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof vertices, vertices, GL_STATIC_DRAW);
+    context->verticesVbo.bind();
+    context->verticesVbo.setData(vertices, GL_STATIC_DRAW);
 
     glVertexAttribPointer(verticies_index, 3, GL_FLOAT, GL_FALSE, 0, NULL);
     glEnableVertexAttribArray(verticies_index);
 
-    unsigned int colors_vbo;
-    glGenBuffers(1, &colors_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, colors_vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof vertex_colors, vertex_colors, GL_STATIC_DRAW);
+    context->colorsVbo.bind();
+    context->colorsVbo.setData(vertex_colors, GL_STATIC_DRAW);
 
     glVertexAttribPointer(colors_index, 3, GL_FLOAT, GL_FALSE, 0, NULL);
     glEnableVertexAttribArray(colors_index);
@@ -191,6 +189,6 @@ void render(struct context* context) {
     }
     context->shaderProgram->use();
     context->shaderProgram->set("ticks", (float)glfwGetTime());
-    context->vao->bind();
+    context->vao.bind();
     glDrawElements(GL_TRIANGLES, triangles * 3, GL_UNSIGNED_SHORT, NULL);
 }

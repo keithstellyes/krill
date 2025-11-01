@@ -19,6 +19,11 @@ void VertexDefinition::addVec3()
     this->types.push_back(GLSLType::Vec3);
 }
 
+void VertexDefinition::addVec3d()
+{
+    this->types.push_back(GLSLType::Vec3d);
+}
+
 const std::vector<GLSLType>& VertexDefinition::getTypes() const
 {
     return this->types;
@@ -43,6 +48,8 @@ size_t getGLSLTypeSize(GLSLType datatype)
             return getGLSLTypeSize(GLSLType::Float) * 2;
         case GLSLType::Vec3:
             return getGLSLTypeSize(GLSLType::Float) * 3;
+        case GLSLType::Vec3d:
+            return 8 * 3;
         default:
             assert(false);
     }

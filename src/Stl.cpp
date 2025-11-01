@@ -241,14 +241,25 @@ std::string StlModel::getSolidName() const
     return ret;
 }
 
+// TODO: this should be a runtime option
+// STL doesn't specify y vs z up, so models can be inconsistent here.
+// it seems z up is actually more common contrary to wikipedia...
+#define SWAP_Y_Z
 constexpr Vertex3d fromStlVertex(const StlVertex &stlV)
 {
     Vertex3d v3d;
+
     v3d.x = stlV.x;
+#ifdef SWAP_Y_Z
+    v3d.y = stlV.z;
+    v3d.z = stlV.y;
+#else
     v3d.y = stlV.y;
     v3d.z = stlV.z;
+#endif
     return v3d;
 }
+
 constexpr Triangle fromStlTri(const StlTri &stlTri)
 {
     Triangle tri;

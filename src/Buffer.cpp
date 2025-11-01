@@ -26,10 +26,9 @@ void Buffer::bind()
 // In other words, storing attributes together contigiously versus vertexes
 void ArrayBuffer::useVertexDefinition(const VertexDefinition& vertexDef)
 {
-    size_t requiredData = 0;
     size_t stride = vertexDef.getStride();
     size_t offset = 0;
-    for(int i = 0; i < vertexDef.getTypes().size(); i++) {
+    for(unsigned int i = 0; i < vertexDef.getTypes().size(); i++) {
         GLSLType t = vertexDef.getTypes()[i];
         switch(t) {
             case GLSLType::Float:
@@ -41,6 +40,8 @@ void ArrayBuffer::useVertexDefinition(const VertexDefinition& vertexDef)
             case GLSLType::Vec3:
                 glVertexAttribPointer(i, 3, GL_FLOAT, GL_FALSE, stride, (const void*)offset);
                 break;
+            case GLSLType::Vec3d:
+                glVertexAttribPointer(i, 3, GL_DOUBLE, GL_FALSE, stride, (const void*)offset);
         }
         glEnableVertexAttribArray(i);
         offset += getGLSLTypeSize(t);

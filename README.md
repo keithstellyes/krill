@@ -18,3 +18,7 @@ use Krill's replacements for OpenGL calls. Additionally, I modified rotation log
 to my monitor refresh rate of 165Hz.
 
 ![Rotating cube of multiple colors](screenshots/cube.webp)
+
+I have also implemented a model viewer. Currently it only supports STL files (which do not intrinsically have textures!)
+but want to support more sophisticated models with textures soon.
+![Rotating 3D model of a colorful bottle](screenshots/modelview.webp)
