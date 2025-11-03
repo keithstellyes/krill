@@ -22,3 +22,6 @@ to my monitor refresh rate of 165Hz.
 I have also implemented a model viewer. Currently it only supports STL files (which do not intrinsically have textures!)
 but want to support more sophisticated models with textures soon.
 ![Rotating 3D model of a colorful bottle](screenshots/modelview.webp)
+
+There is a compute shader example, where it takes a vector of floating points, and doubles each one.
+See `examples/doublelist`

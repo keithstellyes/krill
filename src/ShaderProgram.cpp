@@ -11,6 +11,12 @@ ShaderProgram::ShaderProgram(VertexShader& v, FragmentShader& f)
     // Link our program
     glLinkProgram(this->programId);
 }
+ShaderProgram::ShaderProgram(ComputeShader &computeShader)
+{
+    this->programId = glCreateProgram();
+    glAttachShader(this->programId, computeShader.getShaderId());
+    glLinkProgram(this->programId);
+}
 
 void ShaderProgram::use()
 {

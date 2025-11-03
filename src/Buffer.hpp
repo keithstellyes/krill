@@ -12,11 +12,11 @@ class Buffer {
         size_t memberSize;
         size_t numMembers;
         void genBuffer();
+        Buffer(GLenum target);
 
     public:
         GLuint getBufferId() { return this->bufferId; }
         Buffer() = delete;
-        Buffer(GLenum target);
         void bind();
         template <typename T>
             void setData(const std::vector<T> &data, GLenum usage)
@@ -38,4 +38,11 @@ class ArrayBuffer : public Buffer {
 class ElementArrayBuffer : public Buffer {
     public:
         ElementArrayBuffer() : Buffer(GL_ELEMENT_ARRAY_BUFFER) {}
+};
+
+class ShaderStorageBuffer : public Buffer {
+    public:
+        ShaderStorageBuffer() : Buffer(GL_SHADER_STORAGE_BUFFER) {}
+        // only shader storage and atomic counters can use glBindBufferBase(...)
+        void bindBase(unsigned int index);
 };

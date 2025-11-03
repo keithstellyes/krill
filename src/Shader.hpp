@@ -28,3 +28,10 @@ class VertexShader : public Shader {
         VertexShader(std::ifstream& path);
         VertexShader(std::filesystem::path srcPath);
 };
+
+class ComputeShader : public Shader {
+    public:
+        ComputeShader (const char *src);
+        ComputeShader(std::ifstream& path);
+        ComputeShader(std::filesystem::path srcPath);
+};

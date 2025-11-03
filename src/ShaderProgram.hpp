@@ -9,6 +9,7 @@ class ShaderProgram {
         std::map<const char*, int> uniformLocCache;
     public:
         ShaderProgram(VertexShader &vertexShader, FragmentShader &fragmentShader);
+        ShaderProgram(ComputeShader &computeShader);
         GLuint getProgramId() { return this->programId; }
         void use();
         int getUniformLocation(const char *name);

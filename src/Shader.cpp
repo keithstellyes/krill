@@ -3,9 +3,12 @@
 
 GLuint compileShader(const char *src, GLenum shaderType)
 {
+    std::cout << "About to glCreateShader" << std::endl;
     GLuint shaderId = glCreateShader(shaderType);
+    std::cout << "Done." << std::endl;
     glShaderSource(shaderId, 1, &src, nullptr);
     glCompileShader(shaderId);
+    std::cout << "glCompileShader... Done." << std::endl;
 
     int  success;
     char infoLog[512];
@@ -69,4 +72,19 @@ VertexShader::VertexShader(std::filesystem::path srcPath)
     this->shaderId = compileShaderFromFile(f, GL_VERTEX_SHADER);
     f.close();
 
+}
+
+ComputeShader::ComputeShader (const char *src)
+{
+    this->shaderId = compileShader(src, GL_COMPUTE_SHADER);
+}
+ComputeShader::ComputeShader(std::ifstream& file)
+{
+    this->shaderId = compileShaderFromFile(file, GL_COMPUTE_SHADER);
+}
+ComputeShader::ComputeShader(std::filesystem::path srcPath)
+{
+    std::ifstream f(srcPath);
+    this->shaderId = compileShaderFromFile(f, GL_COMPUTE_SHADER);
+    f.close();
 }

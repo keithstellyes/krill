@@ -47,3 +47,9 @@ void ArrayBuffer::useVertexDefinition(const VertexDefinition& vertexDef)
         offset += getGLSLTypeSize(t);
     }
 }
+
+void ShaderStorageBuffer::bindBase(unsigned int index)
+{
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, index, bufferId);
+}
+
