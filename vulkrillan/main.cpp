@@ -35,6 +35,19 @@ int deviceScore(const vk::PhysicalDevice &d)
     return score;
 }
 
+vk::PhysicalDevice getPhysicalDevice(vk::Instance &instance)
+{
+    std::vector<vk::PhysicalDevice> devices = instance.enumeratePhysicalDevices();
+
+    if(devices.empty()) {
+        throw std::runtime_error("No Vulkan devices :(");
+    }
+
+    return *std::max_element(devices.begin(), devices.end(), [](const vk::PhysicalDevice a, const vk::PhysicalDevice b) {
+                return deviceScore(a) > deviceScore(b);
+            });
+}
+
 int main()
 {
     vk::ApplicationInfo appInfo{
@@ -50,31 +63,6 @@ int main()
     createInfo.setPApplicationInfo(&appInfo);
 
     vk::Instance instance = vk::createInstance(createInfo);
-
-    std::vector<vk::PhysicalDevice> devices = instance.enumeratePhysicalDevices();
-
-    if(devices.empty()) {
-        throw std::runtime_error("No Vulkan devices :(");
-    }
-    for (const auto& device : devices) {
-        vk::PhysicalDeviceProperties props = device.getProperties();
-
-        std::cout << "Device: " << props.deviceName << "\n";
-        std::cout << "Suitability score:" << deviceScore(device) << '\n';
-
-        switch (props.deviceType) {
-            case vk::PhysicalDeviceType::eDiscreteGpu:
-                std::cout << "Type: Discrete GPU\n";
-                break;
-            case vk::PhysicalDeviceType::eIntegratedGpu:
-                std::cout << "Type: Integrated GPU\n";
-                break;
-            case vk::PhysicalDeviceType::eCpu:
-                std::cout << "Type: CPU\n";
-                break;
-            default:
-                std::cout << "Type: Other\n";
-                break;
-        }
-    }
+    auto physicalDevice = getPhysicalDevice(instance);
+    std::cout << "Chosen physical device: " << physicalDevice.getProperties().deviceName << std::endl;
 }
