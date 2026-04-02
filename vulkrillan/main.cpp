@@ -1,8 +1,10 @@
+// added for using debug messaging
+#define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #include <vulkan/vulkan.hpp>
 #include <iostream>
 
 typedef uint32_t u32;
-
+VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 u32 pickQueueFamilyIndex(const vk::PhysicalDevice &device)
 {
     std::vector<vk::QueueFamilyProperties> queueFamilyPropertiesList = device.getQueueFamilyProperties();
@@ -64,6 +66,72 @@ vk::PhysicalDevice pickPhysicalDevice(vk::Instance &instance)
             });
 }
 
+vk::Bool32 VKAPI_CALL debugUtilsMessengerCallback( vk::DebugUtilsMessageSeverityFlagBitsEXT       messageSeverity,
+        vk::DebugUtilsMessageTypeFlagsEXT              messageTypes,
+        const vk::DebugUtilsMessengerCallbackDataEXT * pCallbackData,
+        void * pUserData )
+{
+    std::cerr << vk::to_string( messageSeverity ) << ": " << vk::to_string( messageTypes );
+    std::cerr << " [" << pCallbackData->pMessageIdName << ']';
+    std::cerr << pCallbackData->pMessage << ">\n";
+    if ( 0 < pCallbackData->queueLabelCount )
+    {
+        std::cerr << std::string( "\t" ) << "Queue Labels:\n";
+        for ( uint32_t i = 0; i < pCallbackData->queueLabelCount; i++ )
+        {
+            std::cerr << std::string( "\t\t" ) << "labelName = <" << pCallbackData->pQueueLabels[i].pLabelName << ">\n";
+        }
+    }
+    if ( 0 < pCallbackData->cmdBufLabelCount )
+    {
+        std::cerr << std::string( "\t" ) << "CommandBuffer Labels:\n";
+        for ( uint32_t i = 0; i < pCallbackData->cmdBufLabelCount; i++ )
+        {
+            std::cerr << std::string( "\t\t" ) << "labelName = <" << pCallbackData->pCmdBufLabels[i].pLabelName << ">\n";
+        }
+    }
+// For now, it's a bit noisy to print the objects, but might be useful to do later...
+#define PRINT_OBJECTS 0
+    if (PRINT_OBJECTS &&  0 < pCallbackData->objectCount )
+    {
+        std::cerr << std::string( "\t" ) << "Objects:\n";
+        for ( uint32_t i = 0; i < pCallbackData->objectCount; i++ )
+        {
+            std::cerr << std::string( "\t\t" ) << "Object " << i << "\n";
+            std::cerr << std::string( "\t\t\t" ) << "objectType   = " << vk::to_string( pCallbackData->pObjects[i].objectType ) << "\n";
+            std::cerr << std::string( "\t\t\t" ) << "objectHandle = " << pCallbackData->pObjects[i].objectHandle << "\n";
+            if ( pCallbackData->pObjects[i].pObjectName )
+            {
+                std::cerr << std::string( "\t\t\t" ) << "objectName   = <" << pCallbackData->pObjects[i].pObjectName << ">\n";
+            }
+        }
+    }
+    return vk::False;
+}
+
+enum class LogLevel {
+    Error,
+    Warning,
+    Info,
+    Verbose
+};
+
+vk::DebugUtilsMessengerCreateInfoEXT makeDebugMessenger(const LogLevel &logLevel)
+{
+    vk::Flags<vk::DebugUtilsMessageSeverityFlagBitsEXT> severityFlags = vk::DebugUtilsMessageSeverityFlagBitsEXT::eError;
+
+    switch(logLevel) {
+        case LogLevel::Verbose:
+            severityFlags |= vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose;
+        case LogLevel::Info:
+            severityFlags |= vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo;
+        case LogLevel::Warning:
+            severityFlags |= vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning;
+    }
+    return { {}, severityFlags,
+        vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance |
+            vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation , &debugUtilsMessengerCallback};
+}
 
 int main()
 {
@@ -75,11 +143,20 @@ int main()
             // TODO AI choce this version is this really the best choice?
             VK_API_VERSION_1_3
     };
+    static vk::detail::DynamicLoader dl;
+    PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr =
+        dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
 
     vk::InstanceCreateInfo createInfo{};
+    const char *extensions[] = {"VK_EXT_debug_utils"};
+    createInfo.setPpEnabledExtensionNames(extensions);
+    createInfo.setEnabledExtensionCount(1);
     createInfo.setPApplicationInfo(&appInfo);
 
     vk::Instance instance = vk::createInstance(createInfo);
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(instance);
+    vk::DebugUtilsMessengerEXT debugUtilsMessenger = instance.createDebugUtilsMessengerEXT(makeDebugMessenger(LogLevel::Verbose));
     auto physicalDevice = pickPhysicalDevice(instance);
     std::cout << "Chosen physical device: ";
     std::cout << physicalDevice.getProperties().deviceName << std::endl;
@@ -107,6 +184,7 @@ int main()
     float queuePriority = 0.0f;
     vk::DeviceQueueCreateInfo deviceQueueCreateInfo(vk::DeviceQueueCreateFlags(), queueIndex, queueCount, &queuePriority);
     vk::Device device = physicalDevice.createDevice(vk::DeviceCreateInfo(vk::DeviceCreateFlags(), deviceQueueCreateInfo));
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(device);
 
     return 0;
 }
