@@ -26,7 +26,7 @@ u32 pickQueueFamilyIndex(const vk::PhysicalDevice &device)
 bool hasSwapchainExtension(vk::PhysicalDevice device) {
     auto extensions = device.enumerateDeviceExtensionProperties();
 
-    for (const auto& ext : extensions) {
+        for (const auto& ext : extensions) {
         if (std::strcmp(ext.extensionName, VK_KHR_SWAPCHAIN_EXTENSION_NAME) == 0) {
             return true;
         }
@@ -68,6 +68,24 @@ vk::PhysicalDevice pickPhysicalDevice(vk::Instance &instance)
     return *std::max_element(devices.begin(), devices.end(), [](const vk::PhysicalDevice a, const vk::PhysicalDevice b) {
             return deviceScore(a) > deviceScore(b);
             });
+}
+
+vk::Extent2D pickExtent(const vk::SurfaceCapabilitiesKHR &surfaceCapabilities, uint32_t width, uint32_t height)
+{
+    vk::Extent2D               swapchainExtent;
+    if ( surfaceCapabilities.currentExtent.width == (std::numeric_limits<uint32_t>::max)() )
+    {
+        // If the surface size is undefined, the size is set to the size of the images requested.
+        swapchainExtent.width  = std::clamp(width, surfaceCapabilities.minImageExtent.width, surfaceCapabilities.maxImageExtent.width );
+        swapchainExtent.height = std::clamp(height, surfaceCapabilities.minImageExtent.height, surfaceCapabilities.maxImageExtent.height );
+    }
+    else
+    {
+        // If the surface size is defined, the swap chain size must match
+        swapchainExtent = surfaceCapabilities.currentExtent;
+    }
+
+    return swapchainExtent;
 }
 
 vk::Bool32 VKAPI_CALL debugUtilsMessengerCallback( vk::DebugUtilsMessageSeverityFlagBitsEXT       messageSeverity,
@@ -158,12 +176,18 @@ int main()
     PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr =
         dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
     VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
+    std::cout << "Swapchain extension name:" << VK_KHR_SWAPCHAIN_EXTENSION_NAME << std::endl;
 
     vk::InstanceCreateInfo createInfo{};
-    const char *extensions[] = {"VK_EXT_debug_utils", "VK_KHR_surface", "VK_KHR_wayland_surface" /* TODO: let's not assume everyone is using Wayland :) */};
-    createInfo.setPpEnabledExtensionNames(extensions);
-    createInfo.setEnabledExtensionCount(3);
+    std::vector<const char*> extensions = {"VK_EXT_debug_utils",
+        "VK_KHR_surface",
+        "VK_KHR_wayland_surface" /* TODO: let's not assume everyone is using Wayland :) */};
+    createInfo.setPpEnabledExtensionNames(extensions.data());
+    createInfo.setEnabledExtensionCount(extensions.size());
     createInfo.setPApplicationInfo(&appInfo);
+    std::vector<const char*> validationLayers = {"VK_LAYER_KHRONOS_validation"};
+    createInfo.setPpEnabledLayerNames(validationLayers.data());
+    createInfo.setEnabledLayerCount(validationLayers.size());
 
     vk::Instance instance = vk::createInstance(createInfo);
     VULKAN_HPP_DEFAULT_DISPATCHER.init(instance);
@@ -194,7 +218,11 @@ int main()
     int queueCount = 1;
     float queuePriority = 0.0f;
     vk::DeviceQueueCreateInfo deviceQueueCreateInfo(vk::DeviceQueueCreateFlags(), queueIndex, queueCount, &queuePriority);
-    vk::Device device = physicalDevice.createDevice(vk::DeviceCreateInfo(vk::DeviceCreateFlags(), deviceQueueCreateInfo));
+    std::vector<const char*> requiredDeviceExtensions = {vk::KHRSwapchainExtensionName};
+    vk::DeviceCreateInfo deviceCreateInfo(vk::DeviceCreateFlags(), deviceQueueCreateInfo);
+    deviceCreateInfo.setPpEnabledExtensionNames(requiredDeviceExtensions.data());
+    deviceCreateInfo.setEnabledExtensionCount(requiredDeviceExtensions.size());
+    vk::Device device = physicalDevice.createDevice(deviceCreateInfo);
     VULKAN_HPP_DEFAULT_DISPATCHER.init(device);
 
     // create a CommandPool to allocate a CommandBuffer from
@@ -234,7 +262,7 @@ int main()
             // the format the guide uses. I think it might be a bit basic ?
             if(format.format == vk::Format::eB8G8R8A8Unorm) {
                 std::cout << " (good candidate?)";
-                // I'm not sure if this is the color space we should do, but it seems like it's good enough
+                // I'm not sure if this is the color space we should do, but it seems like it's good enough and is used in examples
                 if(format.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
                     std::cout << " let's do this one\n";
                     chosenFormatOptional = format;
@@ -248,7 +276,39 @@ int main()
         }
         chosenFormat = chosenFormatOptional.value();
     }
+
     std::cout << "SurfaceFormat chosen... Pixel Format: " << vk::to_string(chosenFormat.format) << ", Color space: " << vk::to_string(chosenFormat.colorSpace) << '\n';
+    const auto &surfaceCapabilities = physicalDevice.getSurfaceCapabilitiesKHR(surface);
+    vk::Extent2D extent = pickExtent(surfaceCapabilities, 800, 800);
+
+    vk::SwapchainCreateInfoKHR swapChainCreateInfo( vk::SwapchainCreateFlagsKHR(),
+                                                    surface,
+                                                    std::clamp(3u, surfaceCapabilities.minImageCount, surfaceCapabilities.maxImageCount),
+                                                    chosenFormat.format,
+                                                    chosenFormat.colorSpace,
+                                                    extent,
+                                                    1,
+                                                    vk::ImageUsageFlagBits::eColorAttachment,
+                                                    vk::SharingMode::eExclusive,
+                                                    {},
+                                                    surfaceCapabilities.currentTransform,
+                                                    vk::CompositeAlphaFlagBitsKHR::eOpaque,
+                                                    vk::PresentModeKHR::eFifo,
+                                                    true,
+                                                    nullptr);
+    std::cout << "Swapchain created!\n";
+    vk::SwapchainKHR swapChain = device.createSwapchainKHR(swapChainCreateInfo);
+    std::vector<vk::Image> swapChainImages = device.getSwapchainImagesKHR(swapChain);
+    std::cout << swapChainImages.size() << " images in swap chain!\n";
+
+    std::vector<vk::ImageView> imageViews;
+    imageViews.reserve( swapChainImages.size() );
+    vk::ImageViewCreateInfo imageViewCreateInfo( {}, {}, vk::ImageViewType::e2D, chosenFormat.format, {}, { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 } );
+    for ( auto image : swapChainImages )
+    {
+        imageViewCreateInfo.image = image;
+        imageViews.push_back( device.createImageView( imageViewCreateInfo ) );
+    }
     std::cout << "Endering app loop..." << std::endl;
     bool done = false;
     while (!done) {
