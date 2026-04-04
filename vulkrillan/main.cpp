@@ -1,10 +1,14 @@
 // added for using debug messaging
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #include <vulkan/vulkan.hpp>
+
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_main.h>
+#include <SDL3/SDL_vulkan.h>
 #include <iostream>
 
 typedef uint32_t u32;
-VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
+    VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 u32 pickQueueFamilyIndex(const vk::PhysicalDevice &device)
 {
     std::vector<vk::QueueFamilyProperties> queueFamilyPropertiesList = device.getQueueFamilyProperties();
@@ -90,7 +94,7 @@ vk::Bool32 VKAPI_CALL debugUtilsMessengerCallback( vk::DebugUtilsMessageSeverity
             std::cerr << std::string( "\t\t" ) << "labelName = <" << pCallbackData->pCmdBufLabels[i].pLabelName << ">\n";
         }
     }
-// For now, it's a bit noisy to print the objects, but might be useful to do later...
+    // For now, it's a bit noisy to print the objects, but might be useful to do later...
 #define PRINT_OBJECTS 0
     if (PRINT_OBJECTS &&  0 < pCallbackData->objectCount )
     {
@@ -127,10 +131,17 @@ vk::DebugUtilsMessengerCreateInfoEXT makeDebugMessenger(const LogLevel &logLevel
             severityFlags |= vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo;
         case LogLevel::Warning:
             severityFlags |= vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning;
+        default:
+            break;
     }
     return { {}, severityFlags,
         vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance |
             vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation , &debugUtilsMessengerCallback};
+}
+
+SDL_Window* createWindow()
+{
+    return SDL_CreateWindow("My App", 800, 800, SDL_WINDOW_VULKAN);
 }
 
 int main()
@@ -149,9 +160,9 @@ int main()
     VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
 
     vk::InstanceCreateInfo createInfo{};
-    const char *extensions[] = {"VK_EXT_debug_utils"};
+    const char *extensions[] = {"VK_EXT_debug_utils", "VK_KHR_surface", "VK_KHR_wayland_surface" /* TODO: let's not assume everyone is using Wayland :) */};
     createInfo.setPpEnabledExtensionNames(extensions);
-    createInfo.setEnabledExtensionCount(1);
+    createInfo.setEnabledExtensionCount(3);
     createInfo.setPApplicationInfo(&appInfo);
 
     vk::Instance instance = vk::createInstance(createInfo);
@@ -185,6 +196,70 @@ int main()
     vk::DeviceQueueCreateInfo deviceQueueCreateInfo(vk::DeviceQueueCreateFlags(), queueIndex, queueCount, &queuePriority);
     vk::Device device = physicalDevice.createDevice(vk::DeviceCreateInfo(vk::DeviceCreateFlags(), deviceQueueCreateInfo));
     VULKAN_HPP_DEFAULT_DISPATCHER.init(device);
+
+    // create a CommandPool to allocate a CommandBuffer from
+    vk::CommandPool commandPool = device.createCommandPool(vk::CommandPoolCreateInfo( vk::CommandPoolCreateFlags(), queueIndex));
+
+    // allocate a CommandBuffer from the CommandPool
+    vk::CommandBuffer commandBuffer =
+        device.allocateCommandBuffers(vk::CommandBufferAllocateInfo(commandPool, vk::CommandBufferLevel::ePrimary, 1)).front();
+
+    SDL_Window *window = createWindow();
+
+    if(window == nullptr) {
+        std::cerr << "SDL error:" << SDL_GetError() << std::endl;
+        throw std::runtime_error("SDL failed to create window!");
+        return -1;
+    } else {
+        std::cout << "SDL has created window!" << std::endl;
+    }
+
+    vk::SurfaceKHR surface;
+    {
+        VkSurfaceKHR _surface;
+        if(!SDL_Vulkan_CreateSurface(window, instance, nullptr, &_surface)) {
+            std::cerr << "SDL error:" << SDL_GetError() << std::endl;
+            throw std::runtime_error("SDL failed to create Vulkan surface!");
+        }
+        surface = vk::SurfaceKHR( _surface );
+    }
+
+    vk::SurfaceFormatKHR chosenFormat;
+    {
+        std::vector<vk::SurfaceFormatKHR> formats = physicalDevice.getSurfaceFormatsKHR(surface);
+        std::optional<vk::SurfaceFormatKHR> chosenFormatOptional;
+        for(auto &format : formats) {
+            std::cout << "Supported format: " << vk::to_string(format.format);
+            std::cout << " Color space:" << vk::to_string(format.colorSpace);
+            // the format the guide uses. I think it might be a bit basic ?
+            if(format.format == vk::Format::eB8G8R8A8Unorm) {
+                std::cout << " (good candidate?)";
+                // I'm not sure if this is the color space we should do, but it seems like it's good enough
+                if(format.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
+                    std::cout << " let's do this one\n";
+                    chosenFormatOptional = format;
+                    break;
+                }
+            }
+            std::cout << '\n';
+        }
+        if(!chosenFormatOptional.has_value()) {
+            throw std::runtime_error("Failed to find chosen format.");
+        }
+        chosenFormat = chosenFormatOptional.value();
+    }
+    std::cout << "SurfaceFormat chosen... Pixel Format: " << vk::to_string(chosenFormat.format) << ", Color space: " << vk::to_string(chosenFormat.colorSpace) << '\n';
+    std::cout << "Endering app loop..." << std::endl;
+    bool done = false;
+    while (!done) {
+        SDL_Event event;
+
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_EVENT_QUIT) {
+                done = true;
+            }
+        }
+    }
 
     return 0;
 }
